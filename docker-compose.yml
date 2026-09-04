@@ -1,0 +1,95 @@
+# =============================================================================
+# nm-deploy — Stack completo Novedades Maritex
+#
+# Une backend (nm-backend-v3), tienda (nm-ecommerce) y admin (nm-frontend-v2).
+#
+# Requisitos:
+#   - nm-backend-v3/.env configurado (copia de .env.example)
+#   - nm-backend-v3/.env.docker (ya incluido en el repo)
+#   - nm-deploy/.env (copia de .env.example)
+#
+# Uso:
+#   cd nm-deploy
+#   cp .env.example .env
+#   docker compose up -d --build
+#
+# Acceso directo (sin reverse-proxy):
+#   Tienda:  http://localhost:3015
+#   Admin:   http://localhost:8080
+#   API:     http://localhost:3000
+#
+# Con reverse-proxy (perfil edge):
+#   docker compose --profile edge up -d --build
+#   Tienda:  http://novedadesmaritex.net.pe  (o Host header + localhost:80)
+#   Admin:   http://app.novedadesmaritex.net.pe
+#   API:     http://api.novedadesmaritex.net.pe
+# =============================================================================
+
+name: nm
+
+include:
+  - path: ../nm-backend-v3/docker-compose.full.yml
+    project_directory: ../nm-backend-v3
+
+services:
+  storefront:
+    build:
+      context: ../nm-ecommerce
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://novedadesmaritex.net.pe}
+        NEXT_PUBLIC_WHATSAPP_NUMBER: ${NEXT_PUBLIC_WHATSAPP_NUMBER:-51901259663}
+        API_BASE_URL: http://gateway:3000/api/v1
+    image: nm-storefront:latest
+    container_name: nm_storefront
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://gateway:3000/api/v1
+      ECOMMERCE_SERVICE_URL: http://ecommerce-service:3012
+      STORE_WAREHOUSE_ID: ${STORE_WAREHOUSE_ID:-}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://novedadesmaritex.net.pe}
+      NEXT_PUBLIC_WHATSAPP_NUMBER: ${NEXT_PUBLIC_WHATSAPP_NUMBER:-51901259663}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      API_ACCESS_TOKEN: ${API_ACCESS_TOKEN:-}
+    ports:
+      - "${STOREFRONT_PORT:-3015}:3015"
+    depends_on:
+      gateway:
+        condition: service_started
+      ecommerce-service:
+        condition: service_started
+    networks:
+      - default
+
+  admin:
+    build:
+      context: ../nm-frontend-v2
+      dockerfile: Dockerfile
+    image: nm-admin:latest
+    container_name: nm_admin
+    restart: unless-stopped
+    ports:
+      - "${ADMIN_PORT:-8080}:80"
+    depends_on:
+      gateway:
+        condition: service_started
+    networks:
+      - default
+
+  reverse-proxy:
+    image: nginx:1.27-alpine
+    container_name: nm_reverse_proxy
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      - ./reverse-proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - storefront
+      - admin
+      - gateway
+    networks:
+      - default
+    profiles:
+      - edge
