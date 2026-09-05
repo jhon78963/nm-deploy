@@ -1,0 +1,30 @@
+# Deploy producción — push a main dispara actualización en el VPS
+#
+# Secrets en GitHub (Settings → Secrets → Actions):
+#   VPS_HOST=82.39.109.241
+#   VPS_USER=root
+#   VPS_SSH_KEY=<private key con acceso al VPS>
+#
+# En el VPS, los repos deben poder hacer git pull (deploy key de GitHub).
+
+name: Deploy production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /opt/nm/nm-deploy
+            git pull origin main
+            bash ./scripts/deploy-prod.sh
