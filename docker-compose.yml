@@ -37,7 +37,7 @@ services:
       context: ../nm-ecommerce
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://novedadesmaritex.net.pe}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3015}
         NEXT_PUBLIC_WHATSAPP_NUMBER: ${NEXT_PUBLIC_WHATSAPP_NUMBER:-51901259663}
         API_BASE_URL: http://gateway:3000/api/v1
     image: nm-storefront:latest
@@ -47,7 +47,7 @@ services:
       API_BASE_URL: http://gateway:3000/api/v1
       ECOMMERCE_SERVICE_URL: http://ecommerce-service:3012
       STORE_WAREHOUSE_ID: ${STORE_WAREHOUSE_ID:-}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://novedadesmaritex.net.pe}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3015}
       NEXT_PUBLIC_WHATSAPP_NUMBER: ${NEXT_PUBLIC_WHATSAPP_NUMBER:-51901259663}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
@@ -55,6 +55,8 @@ services:
     ports:
       - "${STOREFRONT_PORT:-3015}:3015"
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       gateway:
         condition: service_started
       ecommerce-service:
@@ -66,12 +68,16 @@ services:
     build:
       context: ../nm-frontend-v2
       dockerfile: Dockerfile
+      args:
+        NG_CONFIGURATION: ${NG_CONFIGURATION:-docker}
     image: nm-admin:latest
     container_name: nm_admin
     restart: unless-stopped
     ports:
       - "${ADMIN_PORT:-8080}:80"
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       gateway:
         condition: service_started
     networks:
