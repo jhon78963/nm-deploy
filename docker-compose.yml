@@ -58,6 +58,8 @@ services:
       REVALIDATE_SECRET: ${REVALIDATE_SECRET:-}
     ports:
       - "${STOREFRONT_PORT:-3015}:3015"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -79,6 +81,8 @@ services:
     restart: unless-stopped
     environment:
       TZ: America/Lima
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - "${ADMIN_PORT:-8080}:80"
     depends_on:
