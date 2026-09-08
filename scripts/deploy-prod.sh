@@ -12,6 +12,7 @@
 #   1. git pull en los 4 repos
 #   2. docker compose --profile edge up -d --build  (Angular/Next/Nest se buildean AQUÍ)
 #   3. Recarga nginx con config SSL
+#   4. Limpia build cache de Docker (evita acumular ~100GB+ en el VPS)
 #
 # Requisitos en el VPS:
 #   - /opt/nm/nm-{backend-v3,ecommerce,frontend-v2,deploy} clonados con acceso git
@@ -58,4 +59,10 @@ if [ -f reverse-proxy/nginx.ssl.conf ]; then
 fi
 
 docker compose ps
+
+log "Limpiando residuos de Docker (build cache + imágenes huérfanas)..."
+# Seguro post-build: las imágenes taggeadas (nm-*) ya están guardadas; esto solo borra capas intermedias.
+docker builder prune -af || true
+docker image prune -f || true
+
 log "Deploy OK — $(date -Is)"
