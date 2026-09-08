@@ -32,7 +32,7 @@ Añádelo como secret **`DEPLOY_DISPATCH_TOKEN`** en:
 |------|-------------|----------------|
 | `nm-ecommerce` | `main` | solo `storefront` (~5 min) |
 | `nm-backend-v3` | `main` | stack completo (~18 min) |
-| `nm-frontend-v2` | `try-backend-v2` | solo `admin` (~5 min) |
+| `nm-frontend-v2` | `main` | solo `admin` (~5 min) |
 | `nm-deploy` | push `main` | stack completo |
 
 Los PRs ejecutan CI pero **no** despliegan.

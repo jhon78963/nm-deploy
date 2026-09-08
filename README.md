@@ -38,9 +38,6 @@ git clone https://github.com/jhon78963/nm-backend-v3.git
 git clone https://github.com/jhon78963/nm-ecommerce.git
 git clone https://github.com/jhon78963/nm-frontend-v2.git
 git clone https://github.com/jhon78963/nm-deploy.git
-
-# Admin está en try-backend-v2 hasta merge a main
-cd nm-frontend-v2 && git checkout try-backend-v2 && cd ..
 ```
 
 ### 3. Configurar secrets

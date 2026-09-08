@@ -22,7 +22,7 @@ set -euo pipefail
 
 NM_ROOT="${NM_ROOT:-/opt/nm}"
 DEPLOY_DIR="${DEPLOY_DIR:-$NM_ROOT/nm-deploy}"
-FRONTEND_BRANCH="${FRONTEND_BRANCH:-try-backend-v2}"
+FRONTEND_BRANCH="${FRONTEND_BRANCH:-main}"
 SOURCE_REPO="${SOURCE_REPO:-all}"
 SOURCE_SHA="${SOURCE_SHA:-unknown}"
 
