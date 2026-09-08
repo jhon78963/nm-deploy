@@ -12,7 +12,7 @@
 #   1. git pull en los 4 repos
 #   2. docker compose --profile edge up -d --build  (Angular/Next/Nest se buildean AQUÍ)
 #   3. Recarga nginx con config SSL
-#   4. Limpia build cache de Docker (evita acumular ~100GB+ en el VPS)
+#   4. Limpia residuos de Docker (build cache, imágenes viejas, contenedores muertos)
 #
 # Requisitos en el VPS:
 #   - /opt/nm/nm-{backend,ecommerce,frontend,deploy} clonados con acceso git
@@ -68,6 +68,10 @@ else
 fi
 cd "$DEPLOY_DIR"
 export RUN_LARAVEL_ETL=false
+
+log "Limpieza pre-build (libera cache de deploys anteriores)..."
+bash "$DEPLOY_DIR/scripts/docker-cleanup.sh" --pre
+
 if [ -n "$COMPOSE_SERVICES" ]; then
   # shellcheck disable=SC2086
   docker compose --profile edge up -d --build $COMPOSE_SERVICES
@@ -82,9 +86,7 @@ fi
 
 docker compose ps
 
-log "Limpiando residuos de Docker (build cache + imágenes huérfanas)..."
-# Seguro post-build: las imágenes taggeadas (nm-*) ya están guardadas; esto solo borra capas intermedias.
-docker builder prune -af || true
-docker image prune -f || true
+log "Limpieza post-build (residuos de este deploy)..."
+bash "$DEPLOY_DIR/scripts/docker-cleanup.sh"
 
 log "Deploy OK — $(date -Is)"

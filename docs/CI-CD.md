@@ -63,4 +63,10 @@ Requisitos en `/opt/nm/` (ya configurado):
 - `.env` en `nm-deploy` y `nm-backend`
 - Docker + compose v2
 
-El script `scripts/deploy-prod.sh` hace `git pull` en los 4 repos y luego `docker compose --profile edge up -d --build`.
+El script `scripts/deploy-prod.sh` hace `git pull` en los 4 repos, limpia cache Docker **antes y después** del build (`scripts/docker-cleanup.sh`), y luego `docker compose --profile edge up -d --build`.
+
+Para liberar espacio manualmente en el VPS:
+
+```bash
+cd /opt/nm/nm-deploy && ./scripts/docker-cleanup.sh
+```
