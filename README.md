@@ -2,6 +2,8 @@
 
 Une **backend**, **tienda** y **admin** en un solo stack Docker Compose.
 
+**CI/CD:** ver [docs/CI-CD.md](docs/CI-CD.md) — CI en cada repo de app, CD centralizado aquí vía GitHub Actions + SSH al VPS.
+
 ## Repos requeridos (hermanos en el mismo directorio)
 
 ```

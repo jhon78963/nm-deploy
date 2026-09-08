@@ -23,9 +23,20 @@ set -euo pipefail
 NM_ROOT="${NM_ROOT:-/opt/nm}"
 DEPLOY_DIR="${DEPLOY_DIR:-$NM_ROOT/nm-deploy}"
 FRONTEND_BRANCH="${FRONTEND_BRANCH:-try-backend-v2}"
+SOURCE_REPO="${SOURCE_REPO:-all}"
+SOURCE_SHA="${SOURCE_SHA:-unknown}"
 
 log() { echo "[deploy] $*"; }
 die() { echo "[deploy] ERROR: $*" >&2; exit 1; }
+
+resolve_compose_services() {
+  case "$SOURCE_REPO" in
+    nm-ecommerce) echo "storefront" ;;
+    nm-frontend-v2) echo "admin" ;;
+    nm-backend-v3|nm-deploy|all|"") echo "" ;;
+    *) log "WARN: SOURCE_REPO desconocido ($SOURCE_REPO) — rebuild completo"; echo "" ;;
+  esac
+}
 
 pull_repo() {
   local dir="$1"
@@ -48,10 +59,21 @@ pull_repo "$NM_ROOT/nm-ecommerce" main
 pull_repo "$NM_ROOT/nm-frontend-v2" "$FRONTEND_BRANCH"
 pull_repo "$DEPLOY_DIR" main
 
-log "Build + up (admin Angular, storefront Next, APIs — todo en Docker)..."
+COMPOSE_SERVICES="$(resolve_compose_services)"
+log "Origen: $SOURCE_REPO @ $SOURCE_SHA"
+if [ -n "$COMPOSE_SERVICES" ]; then
+  log "Build + up (servicios: $COMPOSE_SERVICES)..."
+else
+  log "Build + up (admin Angular, storefront Next, APIs — todo en Docker)..."
+fi
 cd "$DEPLOY_DIR"
 export RUN_LARAVEL_ETL=false
-docker compose --profile edge up -d --build
+if [ -n "$COMPOSE_SERVICES" ]; then
+  # shellcheck disable=SC2086
+  docker compose --profile edge up -d --build $COMPOSE_SERVICES
+else
+  docker compose --profile edge up -d --build
+fi
 
 if [ -f reverse-proxy/nginx.ssl.conf ]; then
   cp reverse-proxy/nginx.ssl.conf reverse-proxy/nginx.conf

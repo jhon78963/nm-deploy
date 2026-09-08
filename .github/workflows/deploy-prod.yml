@@ -1,30 +1,76 @@
-# Deploy producción — push a main dispara actualización en el VPS
+# CD producción — orquestado desde nm-deploy
 #
-# Secrets en GitHub (Settings → Secrets → Actions):
+# Triggers:
+#   - repository_dispatch desde nm-ecommerce / nm-backend-v3 / nm-frontend-v2 (tras CI verde)
+#   - push a main (cambios de compose, nginx, scripts)
+#   - workflow_dispatch (manual)
+#
+# Secrets en jhon78963/nm-deploy (Settings → Secrets → Actions):
 #   VPS_HOST=82.39.109.241
 #   VPS_USER=root
-#   VPS_SSH_KEY=<private key con acceso al VPS>
+#   VPS_SSH_KEY=<private key SSH del VPS>
 #
-# En el VPS, los repos deben poder hacer git pull (deploy key de GitHub).
+# Secrets en cada repo de aplicación (para repository_dispatch):
+#   DEPLOY_DISPATCH_TOKEN=<PAT fine-grained o classic con repo scope en nm-deploy>
 
 name: Deploy production
 
 on:
+  repository_dispatch:
+    types: [deploy-production]
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      source_repo:
+        description: Repo origen (nm-ecommerce, nm-backend-v3, nm-frontend-v2, nm-deploy, all)
+        required: false
+        default: all
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    name: Deploy to VPS
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+
     steps:
+      - name: Resolve deploy context
+        id: meta
+        run: |
+          case "${{ github.event_name }}" in
+            repository_dispatch)
+              echo "source_repo=${{ github.event.client_payload.repo }}" >> "$GITHUB_OUTPUT"
+              echo "source_sha=${{ github.event.client_payload.sha }}" >> "$GITHUB_OUTPUT"
+              ;;
+            workflow_dispatch)
+              echo "source_repo=${{ inputs.source_repo }}" >> "$GITHUB_OUTPUT"
+              echo "source_sha=manual" >> "$GITHUB_OUTPUT"
+              ;;
+            push)
+              echo "source_repo=nm-deploy" >> "$GITHUB_OUTPUT"
+              echo "source_sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 30m
           script: |
+            export SOURCE_REPO="${{ steps.meta.outputs.source_repo }}"
+            export SOURCE_SHA="${{ steps.meta.outputs.source_sha }}"
             cd /opt/nm/nm-deploy
-            git pull origin main
             bash ./scripts/deploy-prod.sh
+
+      - name: Verify production URLs
+        run: |
+          curl -fsS --max-time 60 https://novedadesmaritex.net.pe/ > /dev/null
+          curl -fsS --max-time 60 https://api.novedadesmaritex.net.pe/health > /dev/null
+          curl -fsS --max-time 60 https://app.novedadesmaritex.net.pe/ > /dev/null
