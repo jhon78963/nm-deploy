@@ -8,9 +8,9 @@ Une **backend**, **tienda** y **admin** en un solo stack Docker Compose.
 
 ```
 /opt/nm/                    # o ~/nm-projects/
-├── nm-backend-v3/            # API NestJS + Postgres + Redis
+├── nm-backend/            # API NestJS + Postgres + Redis
 ├── nm-ecommerce/             # Tienda Next.js
-├── nm-frontend-v2/          # Admin Angular
+├── nm-frontend/          # Admin Angular
 └── nm-deploy/                # Este repo (compose + reverse-proxy)
 ```
 
@@ -34,20 +34,20 @@ Une **backend**, **tienda** y **admin** en un solo stack Docker Compose.
 ```bash
 mkdir -p /opt/nm && cd /opt/nm
 
-git clone https://github.com/jhon78963/nm-backend-v3.git
+git clone https://github.com/jhon78963/nm-backend.git
 git clone https://github.com/jhon78963/nm-ecommerce.git
-git clone https://github.com/jhon78963/nm-frontend-v2.git
+git clone https://github.com/jhon78963/nm-frontend.git
 git clone https://github.com/jhon78963/nm-deploy.git
 ```
 
 ### 3. Configurar secrets
 
 ```bash
-cp nm-backend-v3/.env.example nm-backend-v3/.env
+cp nm-backend/.env.example nm-backend/.env
 cp nm-deploy/.env.example nm-deploy/.env
 ```
 
-Editar `nm-backend-v3/.env`:
+Editar `nm-backend/.env`:
 
 - `JWT_SECRET`, `JWT_REFRESH_SECRET` (generar únicos)
 - `POSTGRES_PASSWORD` (fuerte)
@@ -84,9 +84,9 @@ El `reverse-proxy` actual escucha en puerto 80. Para HTTPS:
 ### 6. Actualizar en producción
 
 ```bash
-cd /opt/nm/nm-backend-v3 && git pull
+cd /opt/nm/nm-backend && git pull
 cd /opt/nm/nm-ecommerce && git pull
-cd /opt/nm/nm-frontend-v2 && git pull
+cd /opt/nm/nm-frontend && git pull
 cd /opt/nm/nm-deploy && git pull
 
 cd /opt/nm/nm-deploy
@@ -139,7 +139,7 @@ nm-backup/*.backup (archivo local)
 # ── EN LOCAL (una sola vez) ──────────────────────────────────────────────
 
 # 1. Restaurar backup Laravel + ETL (si aún no lo hiciste)
-cd nm-backend-v3
+cd nm-backend
 ./scripts/restore-nm-db-backup.sh ../nm-backup/tu_backup.backup
 
 # 2. Probar tienda, admin, pedidos, etc. con datos reales
@@ -171,7 +171,7 @@ gunzip -c nm_services_prod_ready.sql.gz | \
 RUN_LARAVEL_ETL=false docker compose up -d --build
 ```
 
-En `nm-backend-v3/.env` del VPS pon `RUN_LARAVEL_ETL=false` para que el servicio `migrate` **no** intente ETL de Laravel (ya tienes datos).
+En `nm-backend/.env` del VPS pon `RUN_LARAVEL_ETL=false` para que el servicio `migrate` **no** intente ETL de Laravel (ya tienes datos).
 
 ### Camino B — Migrar directamente en el VPS
 
@@ -182,7 +182,7 @@ En `nm-backend-v3/.env` del VPS pon `RUN_LARAVEL_ETL=false` para que el servicio
 scp nm-backup/tu_backup.backup user@vps:/opt/nm/backups/
 
 # 2. En VPS, clonar repos y configurar .env
-cd /opt/nm/nm-backend-v3
+cd /opt/nm/nm-backend
 ./scripts/restore-nm-db-backup.sh /opt/nm/backups/tu_backup.backup
 
 # 3. Levantar el resto del stack
@@ -279,6 +279,6 @@ gunzip -c /opt/nm/backups/nm_services_YYYYMMDD_HHMMSS.sql.gz | \
 
 ## Referencias
 
-- Migración Laravel → Prisma: `nm-backend-v3/scripts/docker-prisma-migrate.sh`
-- Restaurar backup legacy: `nm-backend-v3/scripts/restore-nm-db-backup.sh`
+- Migración Laravel → Prisma: `nm-backend/scripts/docker-prisma-migrate.sh`
+- Restaurar backup legacy: `nm-backend/scripts/restore-nm-db-backup.sh`
 - Roadmap seguridad/SEO: `docs/ecommerce-production-roadmap.md` (en monorepo local)

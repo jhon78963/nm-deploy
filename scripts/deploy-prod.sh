@@ -15,7 +15,7 @@
 #   4. Limpia build cache de Docker (evita acumular ~100GB+ en el VPS)
 #
 # Requisitos en el VPS:
-#   - /opt/nm/nm-{backend-v3,ecommerce,frontend-v2,deploy} clonados con acceso git
+#   - /opt/nm/nm-{backend,ecommerce,frontend,deploy} clonados con acceso git
 #   - .env ya configurados (no se sobrescriben)
 # =============================================================================
 set -euo pipefail
@@ -32,8 +32,8 @@ die() { echo "[deploy] ERROR: $*" >&2; exit 1; }
 resolve_compose_services() {
   case "$SOURCE_REPO" in
     nm-ecommerce) echo "storefront" ;;
-    nm-frontend-v2) echo "admin" ;;
-    nm-backend-v3|nm-deploy|all|"") echo "" ;;
+    nm-frontend|nm-frontend-v2) echo "admin" ;;
+    nm-backend|nm-backend-v3|nm-deploy|all|"") echo "" ;;
     *) log "WARN: SOURCE_REPO desconocido ($SOURCE_REPO) — rebuild completo"; echo "" ;;
   esac
 }
@@ -51,12 +51,12 @@ pull_repo() {
 }
 
 [ -f "$DEPLOY_DIR/docker-compose.yml" ] || die "No existe $DEPLOY_DIR/docker-compose.yml"
-[ -f "$NM_ROOT/nm-backend-v3/.env" ] || die "Falta $NM_ROOT/nm-backend-v3/.env"
+[ -f "$NM_ROOT/nm-backend/.env" ] || die "Falta $NM_ROOT/nm-backend/.env"
 [ -f "$DEPLOY_DIR/.env" ] || die "Falta $DEPLOY_DIR/.env"
 
-pull_repo "$NM_ROOT/nm-backend-v3" main
+pull_repo "$NM_ROOT/nm-backend" main
 pull_repo "$NM_ROOT/nm-ecommerce" main
-pull_repo "$NM_ROOT/nm-frontend-v2" "$FRONTEND_BRANCH"
+pull_repo "$NM_ROOT/nm-frontend" "$FRONTEND_BRANCH"
 pull_repo "$DEPLOY_DIR" main
 
 COMPOSE_SERVICES="$(resolve_compose_services)"

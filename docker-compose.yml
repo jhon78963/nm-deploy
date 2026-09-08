@@ -1,11 +1,11 @@
 # =============================================================================
 # nm-deploy — Stack completo Novedades Maritex
 #
-# Une backend (nm-backend-v3), tienda (nm-ecommerce) y admin (nm-frontend-v2).
+# Une backend (nm-backend), tienda (nm-ecommerce) y admin (nm-frontend).
 #
 # Requisitos:
-#   - nm-backend-v3/.env configurado (copia de .env.example)
-#   - nm-backend-v3/.env.docker (ya incluido en el repo)
+#   - nm-backend/.env configurado (copia de .env.example)
+#   - nm-backend/.env.docker (ya incluido en el repo)
 #   - nm-deploy/.env (copia de .env.example)
 #
 # Uso:
@@ -28,8 +28,8 @@
 name: nm
 
 include:
-  - path: ../nm-backend-v3/docker-compose.full.yml
-    project_directory: ../nm-backend-v3
+  - path: ../nm-backend/docker-compose.full.yml
+    project_directory: ../nm-backend
 
 services:
   storefront:
@@ -74,7 +74,7 @@ services:
 
   admin:
     build:
-      context: ../nm-frontend-v2
+      context: ../nm-frontend
       dockerfile: Dockerfile
       args:
         NG_CONFIGURATION: ${NG_CONFIGURATION:-docker}

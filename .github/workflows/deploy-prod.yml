@@ -1,7 +1,7 @@
 # CD producción — orquestado desde nm-deploy
 #
 # Triggers:
-#   - repository_dispatch desde nm-ecommerce / nm-backend-v3 / nm-frontend-v2 (tras CI verde)
+#   - repository_dispatch desde nm-ecommerce / nm-backend / nm-frontend (tras CI verde)
 #   - push a main (cambios de compose, nginx, scripts)
 #   - workflow_dispatch (manual)
 #
@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
     inputs:
       source_repo:
-        description: Repo origen (nm-ecommerce, nm-backend-v3, nm-frontend-v2, nm-deploy, all)
+        description: Repo origen (nm-ecommerce, nm-backend, nm-frontend, nm-deploy, all)
         required: false
         default: all
 

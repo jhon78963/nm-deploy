@@ -4,8 +4,8 @@ Arquitectura multi-repo: **CI en cada aplicación**, **CD centralizado en nm-dep
 
 ```text
 nm-ecommerce ──CI──► dispatch ──┐
-nm-backend-v3 ──CI──► dispatch ──┼──► nm-deploy (CD) ──SSH──► VPS deploy-prod.sh
-nm-frontend-v2 ──CI──► dispatch ──┘
+nm-backend ──CI──► dispatch ──┼──► nm-deploy (CD) ──SSH──► VPS deploy-prod.sh
+nm-frontend ──CI──► dispatch ──┘
 ```
 
 ## 1. Secrets en `jhon78963/nm-deploy`
@@ -23,16 +23,16 @@ Crea un **Personal Access Token** (classic `repo` scope, o fine-grained con acce
 Añádelo como secret **`DEPLOY_DISPATCH_TOKEN`** en:
 
 - `jhon78963/nm-ecommerce`
-- `jhon78963/nm-backend-v3`
-- `jhon78963/nm-frontend-v2`
+- `jhon78963/nm-backend`
+- `jhon78963/nm-frontend`
 
 ## 3. Flujo automático
 
 | Repo | CI (branch) | Deploy tras CI |
 |------|-------------|----------------|
 | `nm-ecommerce` | `main` | solo `storefront` (~5 min) |
-| `nm-backend-v3` | `main` | stack completo (~18 min) |
-| `nm-frontend-v2` | `main` | solo `admin` (~5 min) |
+| `nm-backend` | `main` | stack completo (~18 min) |
+| `nm-frontend` | `main` | solo `admin` (~5 min) |
 | `nm-deploy` | push `main` | stack completo |
 
 Los PRs ejecutan CI pero **no** despliegan.
@@ -60,7 +60,7 @@ El workflow comprueba:
 Requisitos en `/opt/nm/` (ya configurado):
 
 - 4 repos git con `git pull` funcional
-- `.env` en `nm-deploy` y `nm-backend-v3`
+- `.env` en `nm-deploy` y `nm-backend`
 - Docker + compose v2
 
 El script `scripts/deploy-prod.sh` hace `git pull` en los 4 repos y luego `docker compose --profile edge up -d --build`.

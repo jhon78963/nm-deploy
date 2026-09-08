@@ -19,7 +19,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEPLOY_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-BACKEND_ROOT="$(cd "$DEPLOY_ROOT/../nm-backend-v3" && pwd)"
+BACKEND_ROOT="$(cd "$DEPLOY_ROOT/../nm-backend" && pwd)"
 VERIFY_SCRIPT="${VERIFY_SCRIPT:-$DEPLOY_ROOT/../vps/verify-backup.sh}"
 
 BACKUP_DIR="${1:-}"
