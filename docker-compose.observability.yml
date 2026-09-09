@@ -1,0 +1,89 @@
+# =============================================================================
+# nm-deploy — Observabilidad (Loki + Promtail + Grafana)
+#
+# Configs en nm-backend/deploy/observability/ (fuente de verdad).
+# Activa con profile observability junto al stack principal:
+#
+#   cd nm-deploy
+#   docker compose --profile observability up -d
+#
+# Con reverse-proxy (prod):
+#   docker compose --profile edge --profile observability up -d --build
+#
+# Acceso local: http://localhost:3010 (Grafana)
+# Acceso prod:  https://grafana.novedadesmaritex.net.pe (profile edge)
+# =============================================================================
+
+services:
+  loki:
+    profiles: [observability]
+    image: grafana/loki:3.4.2
+    container_name: nm_loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ../nm-backend/deploy/observability/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - nm_loki_data:/loki
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - '${LOKI_PORT:-3100}:3100'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3100/ready']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - default
+
+  promtail:
+    profiles: [observability]
+    image: grafana/promtail:3.4.2
+    container_name: nm_promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    volumes:
+      - ../nm-backend/deploy/observability/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      loki:
+        condition: service_healthy
+    networks:
+      - default
+
+  grafana:
+    profiles: [observability]
+    image: grafana/grafana:11.5.2
+    container_name: nm_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3010}
+      GF_LOG_MODE: console
+      GF_LOG_LEVEL: warn
+    volumes:
+      - nm_grafana_data:/var/lib/grafana
+      - ../nm-backend/deploy/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - '${GRAFANA_PORT:-3010}:3000'
+    depends_on:
+      loki:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/api/health']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - default
+
+volumes:
+  nm_loki_data:
+    name: nm_loki_data
+  nm_grafana_data:
+    name: nm_grafana_data

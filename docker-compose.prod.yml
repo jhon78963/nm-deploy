@@ -1,0 +1,93 @@
+# =============================================================================
+# docker-compose.prod.yml — Producción Novedades Maritex
+#
+# Entry point recomendado en VPS. Extiende docker-compose.yml y cierra puertos
+# internos al host (solo 80/443 vía reverse-proxy con profile edge).
+#
+# Documentación completa: docs/PRODUCTION-COMPOSE.md
+#
+# ── Comandos ─────────────────────────────────────────────────────────────────
+#
+# Stack completo (HTTPS + dominios):
+#   cd nm-deploy
+#   docker compose -f docker-compose.prod.yml --profile edge up -d --build
+#
+# Con observabilidad (Grafana/Loki):
+#   docker compose -f docker-compose.prod.yml --profile edge --profile observability up -d --build
+#
+# Solo migraciones Prisma (sin rebuild):
+#   docker compose -f docker-compose.prod.yml run --rm migrate
+#
+# ── Requisitos ───────────────────────────────────────────────────────────────
+#
+#   nm-backend/.env   → NODE_ENV=production, JWT, POSTGRES_PASSWORD, CORS, mail…
+#   nm-deploy/.env    → DEPLOY_ENV=production, URLs públicas, NG_CONFIGURATION=production
+#   RUN_LARAVEL_ETL=false tras migración inicial de datos
+#
+# ── Perfiles ─────────────────────────────────────────────────────────────────
+#
+#   edge            → reverse-proxy nginx (80/443) + certbot
+#   observability   → Loki + Promtail + Grafana (grafana.novedadesmaritex.net.pe)
+#   tools           → pgAdmin (NO usar en prod salvo emergencia)
+# =============================================================================
+
+name: nm
+
+include:
+  - path: ./docker-compose.yml
+
+x-no-host-ports: &no-host-ports
+  ports: !reset []
+
+services:
+  # Infra — solo red Docker interna
+  postgres:
+    <<: *no-host-ports
+  redis:
+    <<: *no-host-ports
+
+  # Microservicios NestJS — tráfico vía gateway / reverse-proxy
+  gateway:
+    <<: *no-host-ports
+  auth-service:
+    <<: *no-host-ports
+  catalog-service:
+    <<: *no-host-ports
+  inventory-service:
+    <<: *no-host-ports
+  pos-service:
+    <<: *no-host-ports
+  finance-service:
+    <<: *no-host-ports
+  hr-service:
+    <<: *no-host-ports
+  ecommerce-service:
+    <<: *no-host-ports
+  report-service:
+    <<: *no-host-ports
+  document-service:
+    <<: *no-host-ports
+  storage-service:
+    <<: *no-host-ports
+  mail-service:
+    <<: *no-host-ports
+  invoicing-service:
+    <<: *no-host-ports
+  ai-engine:
+    <<: *no-host-ports
+  chatbot-service:
+    <<: *no-host-ports
+
+  # Apps — nginx en edge enruta por Host header
+  storefront:
+    <<: *no-host-ports
+  admin:
+    <<: *no-host-ports
+
+  # Observabilidad — acceso por subdominio grafana.* (profile observability + edge)
+  loki:
+    <<: *no-host-ports
+  grafana:
+    <<: *no-host-ports
+
+  # reverse-proxy mantiene 80/443 (definido en docker-compose.yml, profile edge)

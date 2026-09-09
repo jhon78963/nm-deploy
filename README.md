@@ -27,6 +27,7 @@ Une **backend**, **tienda** y **admin** en un solo stack Docker Compose.
   - `novedadesmaritex.net.pe` → tienda
   - `app.novedadesmaritex.net.pe` → admin
   - `api.novedadesmaritex.net.pe` → API
+  - `grafana.novedadesmaritex.net.pe` → Grafana (opcional, profile `observability`)
 - Puertos 80/443 abiertos (el resto solo red interna Docker)
 
 ### 2. Clonar repos
@@ -70,7 +71,13 @@ cd nm-deploy
 docker compose up -d --build
 
 # Con reverse-proxy por dominio (producción)
-docker compose --profile edge up -d --build
+docker compose -f docker-compose.prod.yml --profile edge up -d --build
+
+# Observabilidad (Grafana + Loki + Promtail)
+docker compose -f docker-compose.prod.yml --profile observability up -d
+
+# Prod con todo
+docker compose -f docker-compose.prod.yml --profile edge --profile observability up -d --build
 ```
 
 ### 5. TLS (HTTPS)
@@ -261,6 +268,7 @@ gunzip -c /opt/nm/backups/nm_services_YYYYMMDD_HHMMSS.sql.gz | \
 | Tienda | http://IP:3015 | https://novedadesmaritex.net.pe |
 | Admin | http://IP:8080 | https://app.novedadesmaritex.net.pe |
 | API | http://IP:3000 | https://api.novedadesmaritex.net.pe |
+| Grafana | http://IP:3010 (`--profile observability`) | https://grafana.novedadesmaritex.net.pe |
 
 ---
 
@@ -279,6 +287,7 @@ gunzip -c /opt/nm/backups/nm_services_YYYYMMDD_HHMMSS.sql.gz | \
 
 ## Referencias
 
+- **Compose producción:** [docs/PRODUCTION-COMPOSE.md](docs/PRODUCTION-COMPOSE.md)
 - Migración Laravel → Prisma: `nm-backend/scripts/docker-prisma-migrate.sh`
 - Restaurar backup legacy: `nm-backend/scripts/restore-nm-db-backup.sh`
 - Roadmap seguridad/SEO: `docs/ecommerce-production-roadmap.md` (en monorepo local)

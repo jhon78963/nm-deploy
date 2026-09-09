@@ -10,7 +10,7 @@
 #
 # Qué hace:
 #   1. git pull en los 4 repos
-#   2. docker compose --profile edge up -d --build  (Angular/Next/Nest se buildean AQUÍ)
+#   2. docker compose -f docker-compose.prod.yml --profile edge up -d --build
 #   3. Recarga nginx con config SSL
 #   4. Limpia residuos de Docker (build cache, imágenes viejas, contenedores muertos)
 #
@@ -74,17 +74,17 @@ bash "$DEPLOY_DIR/scripts/docker-cleanup.sh" --pre
 
 if [ -n "$COMPOSE_SERVICES" ]; then
   # shellcheck disable=SC2086
-  docker compose --profile edge up -d --build $COMPOSE_SERVICES
+  docker compose -f docker-compose.prod.yml --profile edge up -d --build $COMPOSE_SERVICES
 else
-  docker compose --profile edge up -d --build
+  docker compose -f docker-compose.prod.yml --profile edge up -d --build
 fi
 
 if [ -f reverse-proxy/nginx.ssl.conf ]; then
   cp reverse-proxy/nginx.ssl.conf reverse-proxy/nginx.conf
-  docker compose --profile edge restart reverse-proxy
+  docker compose -f docker-compose.prod.yml --profile edge restart reverse-proxy
 fi
 
-docker compose ps
+docker compose -f docker-compose.prod.yml ps
 
 log "Limpieza post-build (residuos de este deploy)..."
 bash "$DEPLOY_DIR/scripts/docker-cleanup.sh"
