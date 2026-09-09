@@ -81,8 +81,10 @@ fi
 
 if [ -f reverse-proxy/nginx.ssl.conf ]; then
   cp reverse-proxy/nginx.ssl.conf reverse-proxy/nginx.conf
-  docker compose -f docker-compose.prod.yml --profile edge restart reverse-proxy
 fi
+
+log "Reiniciando reverse-proxy (refresca DNS de contenedores tras rebuild)..."
+docker compose -f docker-compose.prod.yml --profile edge restart reverse-proxy
 
 docker compose -f docker-compose.prod.yml ps
 
