@@ -37,6 +37,16 @@ prune_post_build() {
 
   log "Redes huérfanas..."
   docker network prune -f 2>/dev/null || true
+
+  log "Volúmenes huérfanos (no toca postgres/uploads activos)..."
+  docker volume prune -f 2>/dev/null || true
+}
+
+prune_system_logs() {
+  if command -v journalctl >/dev/null 2>&1; then
+    log "Journal del sistema (máx. 100 MB)..."
+    journalctl --vacuum-size=100M >/dev/null 2>&1 || true
+  fi
 }
 
 log "=== Inicio ($MODE) ==="
@@ -47,6 +57,7 @@ prune_build_cache
 if [ "$MODE" != "--pre" ]; then
   prune_post_build
   prune_build_cache
+  prune_system_logs
 fi
 
 log "=== Fin ($MODE) ==="
