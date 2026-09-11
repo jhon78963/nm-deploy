@@ -47,7 +47,8 @@ pull_repo() {
   log "git pull $dir ($branch)..."
   git -C "$dir" fetch origin
   git -C "$dir" checkout "$branch"
-  git -C "$dir" pull --ff-only origin "$branch"
+  # VPS must match remote; discard hotfix copies (e.g. scp) that block ff-only pull.
+  git -C "$dir" reset --hard "origin/$branch"
 }
 
 [ -f "$DEPLOY_DIR/docker-compose.yml" ] || die "No existe $DEPLOY_DIR/docker-compose.yml"
