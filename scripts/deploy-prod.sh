@@ -73,6 +73,9 @@ export RUN_LARAVEL_ETL=false
 log "Limpieza pre-build (libera cache de deploys anteriores)..."
 bash "$DEPLOY_DIR/scripts/docker-cleanup.sh" --pre
 
+# migrate es one-shot con container_name fijo; un run anterior (u otro compose project) bloquea el nombre.
+docker rm -f nm_migrate 2>/dev/null || true
+
 if [ -n "$COMPOSE_SERVICES" ]; then
   # shellcheck disable=SC2086
   docker compose -f docker-compose.prod.yml --profile edge up -d --build $COMPOSE_SERVICES
